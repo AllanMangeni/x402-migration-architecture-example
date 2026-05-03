@@ -6,6 +6,7 @@ import { PaymentService } from "./payment-service.js";
 import { WebhookHandler } from "./webhook-handler.js";
 import { PythClient } from "./pyth-client.js";
 import { purchasePriceFeedAction } from "./agent.js";
+import { Request, Response } from "express";
 import winston from "winston";
 
 dotenv.config();
@@ -37,19 +38,20 @@ const webhookHandler = new WebhookHandler(
 const pythClient = new PythClient();
 
 // 2. HTTP Routes
-app.get("/health", (req, res) => res.status(200).json({ status: "ok" }));
+app.get("/health", (req: Request, res: Response) => res.status(200).json({ status: "ok" }));
 
 /**
  * Webhook Endpoint: Entry point for Lithic notifications.
  */
-app.post("/webhooks/lithic", async (req, res) => {
+app.post("/webhooks/lithic", async (req: Request, res: Response) => {
   const payload = req.body;
   const headers = req.headers as Record<string, string>;
 
   try {
     await webhookHandler.handle(payload, headers);
     res.status(200).send("OK");
-  } catch (error) {
+  } catch (error: any) {
+    logger.error("Agent payment action failed:", error);
     res.status(400).send("Webhook Error");
   }
 });
@@ -57,7 +59,7 @@ app.post("/webhooks/lithic", async (req, res) => {
 /**
  * Legacy Observability Dashboard (JSON API)
  */
-app.get("/api/observability/metrics", (req, res) => {
+app.get("/api/observability/metrics", (req: Request, res: Response) => {
   const pending = stateManager.getPendingTransactions();
   res.json({
     stage: 1,
