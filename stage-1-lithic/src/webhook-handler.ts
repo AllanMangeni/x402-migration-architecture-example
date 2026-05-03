@@ -50,7 +50,7 @@ export class WebhookHandler {
           logger.info(`Transaction ${localTx.id} updated to ${status} via webhook`);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error("Webhook processing failed:", error);
       throw error; // Force Lithic to retry webhook
     }
