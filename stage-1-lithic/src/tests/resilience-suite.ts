@@ -44,8 +44,9 @@ async function testDroppedConnection(proxy: Proxy) {
     stream: "downstream"
   });
 
+  const lithicBaseUrl = process.env.LITHIC_BASE_URL || "http://localhost:21000";
   const stateManager = new StateManager(":memory:");
-  const paymentService = new PaymentService("mock_key", stateManager, "http://localhost:21000");
+  const paymentService = new PaymentService("mock_key", stateManager, lithicBaseUrl);
 
   try {
     await paymentService.initiatePurchase("test_drop", 10);
@@ -68,8 +69,9 @@ async function testLatencyTimeout(proxy: Proxy) {
     stream: "downstream"
   });
 
+  const lithicBaseUrl = process.env.LITHIC_BASE_URL || "http://localhost:21000";
   const stateManager = new StateManager(":memory:");
-  const paymentService = new PaymentService("mock_key", stateManager, "http://localhost:21000");
+  const paymentService = new PaymentService("mock_key", stateManager, lithicBaseUrl);
 
   try {
     await paymentService.initiatePurchase("test_latency", 10);
