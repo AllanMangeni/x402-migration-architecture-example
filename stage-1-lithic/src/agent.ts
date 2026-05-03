@@ -57,11 +57,11 @@ export const purchasePriceFeedAction: Action = {
       });
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       logger.error("Agent payment action failed:", error);
       callback({
         text: "I encountered an error processing the payment on the legacy rails.",
-        content: { error: error.message }
+        content: { error: error instanceof Error ? error.message : String(error) }
       });
       return false;
     }
