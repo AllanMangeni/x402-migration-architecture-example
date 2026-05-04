@@ -28,7 +28,12 @@ async function runResilienceTests() {
 
   try {
     await testDroppedConnection(proxy);
+    for (const t of proxy.toxics) await t.remove();
+    
     await testLatencyTimeout(proxy);
+    for (const t of proxy.toxics) await t.remove();
+
+    await testReconnectResync(proxy);
   } finally {
     await proxy.remove();
   }
@@ -85,6 +90,34 @@ async function testLatencyTimeout(proxy: Proxy) {
     const pending = stateManager.getStaleTransactions(0) as any[];
     if (pending.length > 0 && pending[0].status === "PENDING") {
       logger.info("PASSED: State manager correctly holds PENDING status for manual/polled reconciliation.");
+    }
+  }
+}
+
+async function testReconnectResync(proxy: Proxy) {
+  logger.info("Test 3: Reconnect and resync after total outage...");
+  
+  // Disable the proxy to simulate total network outage
+  proxy.enabled = false;
+  await proxy.update();
+
+  const lithicBaseUrl = process.env.LITHIC_BASE_URL || "http://localhost:21000";
+  const stateManager = new StateManager(":memory:");
+  const paymentService = new PaymentService("mock_key", stateManager, lithicBaseUrl);
+
+  try {
+    await paymentService.initiatePurchase("test_reconnect", 10);
+  } catch (error: any) {
+    logger.info("Successfully caught outage error. Re-enabling proxy and verifying reconciliation...");
+    
+    // Bring the network back up
+    proxy.enabled = true;
+    await proxy.update();
+
+    // Verify the transaction was persisted for future reconciliation
+    const pending = stateManager.getStaleTransactions(0) as any[];
+    if (pending.length > 0 && pending[0].id === "test_reconnect") {
+      logger.info("PASSED: Outage correctly handled; transaction queued in local state for recovery.");
     }
   }
 }
