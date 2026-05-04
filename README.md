@@ -19,7 +19,7 @@ This repository demonstrates an incremental migration from a legacy Lithic webho
 
 | Metric | Stage 1 (Legacy) | Stage 2 (Hybrid) | Stage 3 (x402) |
 | :--- | :--- | :--- | :--- |
-| **State Mgmt LOC** | 24 lines | TBD | TBD |
+| **State Mgmt LOC** | 15 lines | TBD | TBD |
 | **Transaction Latency** | ~3.5s | TBD | TBD |
 | **Recovery Complexity** | Toxiproxy Suite (3 failure modes) | TBD | TBD |
 | **Settlement Time** | Async (Webhook Dependent) | TBD | TBD |
