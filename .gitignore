@@ -1,2 +1,13 @@
-/briefs
+# Local environment variables
+.env
+.env.local
+.env.development
+.env.production
+
+# Dependencies
+node_modules/
+.pnpm-store/
+.venv/
+__pycache__/
+# Project Management
 Agents.md

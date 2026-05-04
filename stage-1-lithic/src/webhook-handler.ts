@@ -1,4 +1,4 @@
-import { StateManager, TransactionStatus } from "./state-manager.js";
+import { StateManager, TransactionStatus } from "./state-manager";
 import winston from "winston";
 import Lithic from "lithic";
 
@@ -40,8 +40,6 @@ export class WebhookHandler {
         const status = this.mapLithicStatus(transaction.status);
 
         // 3. Update state manager (Atomic transition)
-        // Find local transaction ID by lithic token (in a real app, this would be a DB lookup)
-        // For demo, we use the lithic token as the search key in our state reconciliation
         const pending = this.stateManager.getPendingTransactions();
         const localTx = pending.find(t => t.lithic_token === lithicToken);
 
@@ -61,7 +59,7 @@ export class WebhookHandler {
       case "SETTLED":
       case "VOIDED":
       case "DECLINED":
-        return "SETTLED"; // Simplified for demo logic
+        return "SETTLED";
       case "PENDING":
         return "SETTLING";
       default:

@@ -1,7 +1,7 @@
 import { Toxiproxy, Proxy } from "toxiproxy-node-client";
 import winston from "winston";
-import { PaymentService } from "../payment-service.js";
-import { StateManager } from "../state-manager.js";
+import { PaymentService } from "../payment-service";
+import { StateManager } from "../state-manager";
 
 const logger = winston.createLogger({
   level: "info",
@@ -39,10 +39,12 @@ async function testDroppedConnection(proxy: Proxy) {
   
   // Add toxic: reset_peer mid-request
   await proxy.addToxic({
-    type: "reset_peer",
+    name: "dropped_conn",
+    type: "reset_peer" as any,
+    toxicity: 1.0,
     attributes: { timeout: 100 },
     stream: "downstream"
-  });
+  } as any);
 
   const lithicBaseUrl = process.env.LITHIC_BASE_URL || "http://localhost:21000";
   const stateManager = new StateManager(":memory:");
@@ -50,9 +52,9 @@ async function testDroppedConnection(proxy: Proxy) {
 
   try {
     await paymentService.initiatePurchase("test_drop", 10);
-  } catch (error) {
+  } catch (error: any) {
     logger.info("Successfully caught dropped connection. Checking state manager...");
-    const pending = stateManager.getPendingTransactions();
+    const pending = stateManager.getStaleTransactions(0); // Check all pending
     if (pending.length > 0) {
       logger.info("PASSED: Transaction persisted in PENDING state despite network failure.");
     }
@@ -64,10 +66,12 @@ async function testLatencyTimeout(proxy: Proxy) {
   
   // Add toxic: 90s latency (Lithic default timeout is 60s)
   await proxy.addToxic({
-    type: "latency",
+    name: "latency_timeout",
+    type: "latency" as any,
+    toxicity: 1.0,
     attributes: { latency: 90000 },
     stream: "downstream"
-  });
+  } as any);
 
   const lithicBaseUrl = process.env.LITHIC_BASE_URL || "http://localhost:21000";
   const stateManager = new StateManager(":memory:");
@@ -75,11 +79,11 @@ async function testLatencyTimeout(proxy: Proxy) {
 
   try {
     await paymentService.initiatePurchase("test_latency", 10);
-  } catch (error) {
+  } catch (error: any) {
     logger.info("Successfully caught timeout. Verifying reconciliation path...");
     // In Stage One, this transaction stays PENDING until the background poller hits it
-    const pending = stateManager.getPendingTransactions();
-    if (pending[0].status === "PENDING") {
+    const pending = stateManager.getStaleTransactions(0) as any[];
+    if (pending.length > 0 && pending[0].status === "PENDING") {
       logger.info("PASSED: State manager correctly holds PENDING status for manual/polled reconciliation.");
     }
   }
