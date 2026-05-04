@@ -49,13 +49,15 @@ export const purchasePriceFeedAction: Action = {
       }
 
       // 4. Polling for settlement (legacy fallback)
+      // STATE_MGMT_LINE: manual polling loop for asynchronous state reconciliation
       let attempts = 0;
       while (attempts < 10) {
         // In a real ElizaOS action, we'd handle this via an observer or event loop.
-        // Here we simulate the legacy "check and wait" pain.
+        // STATE_MGMT_LINE: blocking wait for legacy rail state updates
         await new Promise((resolve) => setTimeout(resolve, 2000));
         
         // Simulating that settlement happened
+        // STATE_MGMT_LINE: explicit state check against merchant endpoint
         const price = await pythClient.getLatestBtcPrice();
         
         if (callback) {
