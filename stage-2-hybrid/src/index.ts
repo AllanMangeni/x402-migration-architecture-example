@@ -6,6 +6,8 @@ import { WebhookHandler } from "./webhook-handler";
 import winston from "winston";
 import { X402SettlementService } from "./x402-settlement";
 import { VirtualCardServiceImpl } from "./virtual-card-service-impl";
+
+const logger = winston.createLogger({
   level: "info",
   format: winston.format.json(),
   transports: [new winston.transports.Console()],

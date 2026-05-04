@@ -1,0 +1,27 @@
+# Section 0: Environment Variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+!.env.example
+
+# Section 0: Dependency Directories
+node_modules/
+bun.lockb
+.bun/
+
+# Section 0: OS and Editor Configurations
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+Agents.md
+
+# Section 0: Logging and Diagnostics
+*.log
+logs/
+test_*.log
+test_output.log

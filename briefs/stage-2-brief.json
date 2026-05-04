@@ -10,7 +10,7 @@
   "tone_target": "authoritative and developer-centric",
   "audience": "fintech developers and software architects",
   "warnings": [
-    "The Stage 1 baseline for state management (24 lines) is an artificial minimum missing idempotency and out-of-order queuing. This must be explicitly documented when comparing the two paths.",
+    "The Stage 1 baseline for state management (15 lines) is an artificial minimum missing idempotency and out-of-order queuing. This must be explicitly documented when comparing the two paths.",
     "Do not mock the x402 settlement. Use the @x402/core and @x402/evm SDKs to facilitate the transaction, even if simulated via a testnet or local sandbox.",
     "Ensure the VirtualCardService implementation correctly calculates the fiat equivalent for the spend limit based on the settled USDC amount."
   ]
