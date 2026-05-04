@@ -29,7 +29,7 @@ export class WebhookHandler {
   public async handle(payload: string, headers: Record<string, string>): Promise<void> {
     try {
       // 1. Signature verification
-      const event = this.lithic.webhooks.unwrap(payload, headers, this.webhookSecret);
+      const event = this.lithic.webhooks.unwrap(payload, headers, this.webhookSecret) as any;
       
       logger.info(`Received webhook event: ${event.event_type}`);
 
@@ -40,10 +40,12 @@ export class WebhookHandler {
         const status = this.mapLithicStatus(transaction.status);
 
         // 3. Update state manager (Atomic transition)
+        // STATE_MGMT_LINE: retrieval of pending state for correlation
         const pending = this.stateManager.getPendingTransactions();
         const localTx = pending.find(t => t.lithic_token === lithicToken);
 
         if (localTx) {
+          // STATE_MGMT_LINE: persisting state transition from async webhook
           await this.stateManager.updateStatus(localTx.id, status);
           logger.info(`Transaction ${localTx.id} updated to ${status} via webhook`);
         }
