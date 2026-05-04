@@ -1,31 +1,31 @@
 {
   "name": "stage-1-lithic",
   "version": "1.0.0",
-  "description": "Baseline Lithic integration with ElizaOS orchestration",
-  "type": "module",
+  "description": "Stage 1: Legacy Lithic Webhook Integration",
   "main": "src/index.ts",
   "scripts": {
     "start": "bun run src/index.ts",
-    "dev": "bun run --watch src/index.ts",
-    "test": "bun test",
-    "test:resilience": "bun run src/tests/resilience-suite.ts",
+    "test": "bun run src/tests/resilience-suite.ts",
     "lint": "eslint src/**/*.ts"
   },
   "dependencies": {
     "@ai16z/eliza": "latest",
-    "lithic": "^1.0.0",
-    "express": "^4.18.2",
-    "better-sqlite3": "^9.0.0",
+    "axios": "^1.16.0",
+    "better-sqlite3": "^12.9.0",
     "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "lithic": "latest",
+    "toxiproxy-node-client": "^2.0.0",
     "winston": "^3.11.0",
-    "zod": "^3.22.4",
-    "toxiproxy-node-client": "^2.0.0"
+    "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/express": "^4.17.21",
-    "@types/better-sqlite3": "^7.6.8",
-    "@types/node": "^20.10.0",
-    "eslint": "^8.56.0",
-    "typescript": "^5.3.3"
+    "@types/node": "^20.19.39",
+    "eslint": "^8.57.1",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   }
 }
