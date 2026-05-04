@@ -2,95 +2,76 @@ import Database from "better-sqlite3";
 import path from "path";
 import winston from "winston";
 
-// Logger configuration
 const logger = winston.createLogger({
   level: "info",
   format: winston.format.json(),
   transports: [new winston.transports.Console()],
 });
 
-export type TransactionStatus = "PENDING" | "SETTLING" | "SETTLED" | "FAILED" | "RECONCILING";
-
-export interface TransactionState {
-  id: string;
-  status: TransactionStatus;
-  amount: number;
-  lithic_token?: string;
-  retry_count: number;
-  last_updated: number;
-}
+export type TransactionStatus = "INITIATED" | "PENDING" | "SETTLING" | "SETTLED" | "FAILED" | "TIMED_OUT";
 
 /**
- * StateManager: Handles persistence and reconciliation for legacy fiat transactions.
- * Annotated with STATE_MGMT_LINE for metric tracking as per System Architect brief.
+ * StateManager: Manages transaction persistence and state transitions.
+ * This is the primary complexity driver in legacy webhook-based architectures.
  */
 export class StateManager {
   private db: Database.Database;
 
   constructor(dbPath: string) {
-    this.db = new Database(dbPath);
+    const fullPath = path.isAbsolute(dbPath) ? dbPath : path.join(process.cwd(), dbPath);
+    this.db = new Database(fullPath);
     this.init();
   }
 
   private init() {
-    this.db.exec(`
+    this.db.prepare(`
       CREATE TABLE IF NOT EXISTS transactions (
         id TEXT PRIMARY KEY,
-        status TEXT NOT NULL,
-        amount REAL NOT NULL,
+        amount INTEGER,
+        status TEXT,
         lithic_token TEXT,
-        retry_count INTEGER DEFAULT 0,
-        last_updated INTEGER NOT NULL
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
-    `);
+    `).run();
   }
 
-  /**
-   * Transitions transaction state with strict validation.
-   */
-  public async updateStatus(id: string, status: TransactionStatus, lithicToken?: string): Promise<void> {
-    const now = Date.now();
-    try { // STATE_MGMT_LINE: retry logic container
-      const stmt = this.db.prepare(`
-        UPDATE transactions 
-        SET status = ?, lithic_token = COALESCE(?, lithic_token), last_updated = ?, retry_count = retry_count + 1
-        WHERE id = ?
-      `);
-      stmt.run(status, lithicToken || null, now, id); // STATE_MGMT_LINE: persistence of transient state
-    } catch (error) { // STATE_MGMT_LINE: failure handling during state transition
-      logger.error(`State update failed for ${id}:`, error);
-      throw error;
+  public createTransaction(id: string, amount: number) {
+    // STATE_MGMT_LINE: initialization of local state to track async webhook response
+    this.db.prepare(
+      "INSERT INTO transactions (id, amount, status) VALUES (?, ?, ?)"
+    ).run(id, amount, "INITIATED");
+  }
+
+  public updateStatus(id: string, status: TransactionStatus, lithicToken?: string) {
+    // STATE_MGMT_LINE: complex conditional logic to handle async state transitions
+    if (lithicToken) {
+      this.db.prepare(
+        "UPDATE transactions SET status = ?, lithic_token = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
+      ).run(status, lithicToken, id);
+    } else {
+      this.db.prepare(
+        "UPDATE transactions SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
+      ).run(status, id);
     }
   }
 
-  /**
-   * Retrieves pending transactions for reconciliation polling.
-   */
-  public getPendingTransactions(): TransactionState[] {
-    const stmt = this.db.prepare("SELECT * FROM transactions WHERE status IN ('PENDING', 'SETTLING', 'RECONCILING')"); // STATE_MGMT_LINE: query for transient states
-    return stmt.all() as TransactionState[];
+  public getTransaction(id: string) {
+    // STATE_MGMT_LINE: manual retrieval of state for polling/reconciliation
+    return this.db.prepare("SELECT * FROM transactions WHERE id = ?").get(id) as any;
   }
 
-  /**
-   * Initializes a new transaction state.
-   */
-  public createTransaction(id: string, amount: number): void {
-    const now = Date.now();
-    const stmt = this.db.prepare(`
-      INSERT INTO transactions (id, status, amount, last_updated) 
-      VALUES (?, 'PENDING', ?, ?)
-    `); // STATE_MGMT_LINE: initial persistence of pending state
-    stmt.run(id, amount, now);
+  public getPendingTransactions() {
+    // STATE_MGMT_LINE: retrieval of all active/pending transactions
+    return this.db.prepare("SELECT * FROM transactions WHERE status IN ('INITIATED', 'PENDING', 'SETTLING')").all() as any[];
   }
 
-  /**
-   * Reconciliation logic to handle interrupted webhook flows.
-   */
-  public async reconcile(id: string, actualStatus: TransactionStatus): Promise<void> {
-    if (actualStatus === "SETTLED") { // STATE_MGMT_LINE: connection status handling block
-      await this.updateStatus(id, "SETTLED");
-    } else if (actualStatus === "FAILED") { // STATE_MGMT_LINE: connection status handling block
-      await this.updateStatus(id, "FAILED");
-    }
+  public getStaleTransactions(timeoutMinutes: number = 5) {
+    // STATE_MGMT_LINE: logic to identify hung transactions needing manual recovery
+    return this.db.prepare(`
+      SELECT * FROM transactions 
+      WHERE status = 'PENDING' 
+      AND updated_at < datetime('now', ?)
+    `).all(`-${timeoutMinutes} minutes`);
   }
 }
