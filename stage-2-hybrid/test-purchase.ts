@@ -29,7 +29,10 @@ async function testAgentPurchase() {
     virtualCardService, 
     pythClient 
   } as any;
-  const mockCallback = (msg: any) => console.log("AGENT RESPONSE:", msg.text);
+  const mockCallback = (msg: any) => {
+    console.log("AGENT RESPONSE:", msg.text);
+    return Promise.resolve([]);
+  };
 
   await purchasePriceFeedAction.handler(
     mockRuntime,
