@@ -1,5 +1,5 @@
-import { X402Client, SettlementParams } from "@x402/core";
-import { EVMFacilitator } from "@x402/evm";
+import { x402Client } from "@x402/core/client";
+import { ExactEvmScheme, toFacilitatorEvmSigner } from "@x402/evm";
 import { createPublicClient, createWalletClient, http, parseUnits } from "viem";
 import { mainnet } from "viem/chains";
 import winston from "winston";
@@ -15,24 +15,25 @@ const logger = winston.createLogger({
  * This represents the modern, state-free payment path.
  */
 export class X402SettlementService {
-  private x402: X402Client;
+  private x402: x402Client;
 
   constructor() {
-    // In Stage Two, we initialize the x402 client with a simulated EVM facilitator.
-    // For this demo, we use a public client pointing to a sandbox/testnet RPC.
     const publicClient = createPublicClient({
       chain: mainnet,
       transport: http(),
     });
 
-    const facilitator = new EVMFacilitator({
-      publicClient,
-      // Wallet client would be configured with the agent's private key
-      walletClient: {} as any, 
-    });
+    const facilitator = new ExactEvmScheme(
+      toFacilitatorEvmSigner(publicClient as any, {} as any)
+    );
 
-    this.x402 = new X402Client({
-      facilitators: [facilitator],
+    this.x402 = x402Client.fromConfig({
+      schemes: [
+        {
+          network: "eip155:1",
+          client: facilitator as any,
+        },
+      ],
     });
   }
 
@@ -48,7 +49,7 @@ export class X402SettlementService {
     try {
       // In a real implementation, this would trigger the on-chain atomic settlement
       // For the hybrid demo, we simulate the synchronous confirmation of the x402 path
-      const params: SettlementParams = {
+      const params = {
         amount: parseUnits(amountUSD.toString(), 6), // USDC usually 6 decimals
         asset: "USDC",
         destination: merchantId,
