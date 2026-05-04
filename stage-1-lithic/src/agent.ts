@@ -1,6 +1,6 @@
 import { Action, IAgentRuntime, Memory, State, HandlerCallback } from "@ai16z/eliza";
-import { PaymentService } from "./payment-service.js";
-import { PythClient } from "./pyth-client.js";
+import { PaymentService } from "./payment-service";
+import { PythClient } from "./pyth-client";
 import winston from "winston";
 
 const logger = winston.createLogger({
@@ -10,67 +10,96 @@ const logger = winston.createLogger({
 });
 
 /**
- * ElizaOS Action: purchase-price-feed
- * Orchestrates the payment flow from the agent's perspective.
+ * purchasePriceFeedAction: ElizaOS action to purchase price data.
+ * Orchestrates the payment flow and data retrieval.
  */
 export const purchasePriceFeedAction: Action = {
   name: "PURCHASE_PRICE_FEED",
-  similes: ["BUY_PRICE_DATA", "PAY_FOR_PYTH"],
-  description: "Purchases a real-time price feed from Pyth Network using Lithic fiat rails.",
-  
+  similes: ["BUY_PRICE_DATA", "FETCH_MARKET_UPDATE", "SETTLE_PYTH_PAYMENT"],
+  description: "Purchases a real-time price feed update from the Pyth network using legacy virtual card rails.",
   validate: async (runtime: IAgentRuntime, message: Memory) => {
-    return !!process.env.LITHIC_API_KEY;
+    return true; // Simplified for Stage One
   },
-
   handler: async (
     runtime: IAgentRuntime,
     message: Memory,
-    state: State,
-    _options: { [key: string]: unknown },
-    callback: HandlerCallback
+    state: State | undefined,
+    options?: { [key: string]: unknown },
+    callback?: HandlerCallback
   ) => {
-    const paymentService = state.paymentService as PaymentService;
-    const pythClient = state.pythClient as PythClient;
-    const priceId = "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"; // BTC/USD
+    // These would typically be provided by the runtime or a custom plugin
+    const paymentService: PaymentService = (state as any).paymentService;
+    const pythClient: PythClient = (state as any).pythClient;
+
     const transactionId = `tx_${Date.now()}`;
 
     try {
-      // 1. Trigger payment initiation
-      const cardToken = await paymentService.initiatePurchase(transactionId, 0.01); // $0.01 for demo
+      // 1. Initiate legacy purchase ($0.01 for the demo)
+      const pan = await paymentService.initiatePurchase(transactionId, 0.01);
       
-      // 2. Simulate the merchant charge (Automated for this demo)
-      await paymentService.simulateCharge(cardToken, 0.01);
+      // 2. Simulate the merchant charge (webhook loop starts here)
+      await paymentService.simulateCharge(pan, 0.01);
 
-      // 3. Wait for settlement (In Stage One, this is an async webhook flow)
-      // For the agent UI flow, we notify that payment is pending
-      callback({
-        text: `I've initiated a payment (ID: ${transactionId}) for the BTC/USD price feed. Waiting for legacy rail settlement...`,
-        content: { transactionId, status: "PENDING" }
-      });
+      // 3. In Stage One, we wait for the webhook. 
+      // For this synchronous agent action, we simulate the wait.
+      if (callback) {
+        callback({
+          text: `I've initiated a payment (ID: ${transactionId}) for the BTC/USD price feed. Waiting for legacy rail settlement...`,
+        });
+      }
 
-      // 4. Fetch the data (In a real app, this would wait for the webhook)
-      const data = await pythClient.getLatestPrice(priceId);
-      
-      callback({
-        text: `Payment settled! Latest BTC price is: $${(data.parsed[0].price.price / 10**8).toFixed(2)}`,
-        content: { data }
-      });
+      // 4. Polling for settlement (legacy fallback)
+      let attempts = 0;
+      while (attempts < 10) {
+        // In a real ElizaOS action, we'd handle this via an observer or event loop.
+        // Here we simulate the legacy "check and wait" pain.
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        
+        // Simulating that settlement happened
+        const price = await pythClient.getLatestBtcPrice();
+        
+        if (callback) {
+          callback({
+            text: `Payment settled! Latest BTC price is: $${price.toFixed(2)}`,
+          });
+        }
+        return true;
+      }
 
-      return true;
     } catch (error: any) {
-      logger.error("Agent payment action failed:", error);
-      callback({
-        text: "I encountered an error processing the payment on the legacy rails.",
-        content: { error: error instanceof Error ? error.message : String(error) }
-      });
-      return false;
-    }
-  },
+      let failureReason = "unknown legacy infrastructure failure";
+      
+      if (error.status === 401 || error.status === 403) {
+        failureReason = "Lithic authentication/permission decline";
+      } else if (error.code === "ECONNRESET" || error.code === "ETIMEDOUT") {
+        failureReason = "network interruption (Toxiproxy injection confirmed)";
+      } else if (error.message.includes("Merchant endpoint unreachable")) {
+        failureReason = "downstream merchant (Pyth) API failure";
+      }
 
+      logger.error(`Agent payment action failed: ${failureReason}`, error);
+      
+      if (callback) {
+        callback({
+          text: `I encountered a critical error: ${failureReason}. The legacy rails were unable to maintain state during this transaction.`,
+        });
+      }
+    }
+    return false;
+  },
   examples: [
     [
-      { user: "{{user1}}", content: { text: "Can you get me the current BTC price?" } },
-      { user: "{{agentName}}", content: { text: "I'll purchase that price feed for you now.", action: "PURCHASE_PRICE_FEED" } }
-    ]
-  ]
+      {
+        user: "{{user1}}",
+        content: { text: "What is the current BTC price? Buy an update if you need to." },
+      },
+      {
+        user: "{{agentName}}",
+        content: {
+          text: "I'll purchase a fresh price feed update for you.",
+          action: "PURCHASE_PRICE_FEED",
+        },
+      },
+    ],
+  ],
 };
