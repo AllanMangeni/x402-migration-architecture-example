@@ -1,39 +1,36 @@
 version: '3.8'
 
 services:
-  # Stage One: Legacy Webhook-based Payment Service
   stage-1:
-    build:
+    build: 
       context: ./stage-1-lithic
       dockerfile: Dockerfile
     ports:
       - "3001:3001"
     environment:
+      # Securely inject credentials from the host .env file
       - LITHIC_API_KEY=${LITHIC_API_KEY}
       - LITHIC_WEBHOOK_SECRET=${LITHIC_WEBHOOK_SECRET}
+      - LITHIC_BASE_URL=${LITHIC_BASE_URL}
       - DATABASE_PATH=/app/data/state.db
       - TOXIPROXY_URL=http://toxiproxy:8474
-      - LITHIC_BASE_URL=http://toxiproxy:21000 # Routed through Toxiproxy for network simulation
     volumes:
+      # Persist state manager database across container restarts
       - ./stage-1-lithic/data:/app/data
     depends_on:
       - toxiproxy
+    networks:
+      - x402-migration-network
 
-  # Toxiproxy: Network simulation engine for resilience testing
+  # Network resilience testing infrastructure
   toxiproxy:
     image: ghcr.io/shopify/toxiproxy:2.5.0
     ports:
-      - "8474:8474" # Management API
-      - "21000:21000" # Proxy for Lithic API
-    command: -host 0.0.0.0
-
-  # Toxiproxy CLI: For configuring toxics during test runs
-  toxiproxy-cli:
-    image: ghcr.io/shopify/toxiproxy:2.5.0
-    entrypoint: ["/toxiproxy-cli"]
-    depends_on:
-      - toxiproxy
+      - "8474:8474"   # Toxiproxy Management API
+      - "21000:21000" # Proxy port for Lithic API simulation
+    networks:
+      - x402-migration-network
 
 networks:
-  default:
-    name: x402-migration-network
+  x402-migration-network:
+    driver: bridge
