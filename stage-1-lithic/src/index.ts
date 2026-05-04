@@ -58,7 +58,7 @@ app.get("/api/observability/metrics", (req: Request, res: Response) => {
 
   res.json({
     stage: 1,
-    state_management_loc: 24, // Counted based on STATE_MGMT_LINE markers
+    state_management_loc: 15, // Counted based on STATE_MGMT_LINE markers
     settlement_type: "async_webhook",
     actual_latency_ms: actualLatency,
     simulated_baseline_ms: 3500
