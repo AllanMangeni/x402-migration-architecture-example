@@ -1,0 +1,42 @@
+# Section 0: Environment Variables
+# All environment configuration files are excluded to protect sensitive credentials.
+# The .env.example file is explicitly included to serve as a template for other developers.
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+!.env.example
+
+# Section 0: Database and State Manager Artifacts
+# Local SQLite database files and their temporary journal files are restricted from version control.
+# This ensures that local state does not interfere with the shared repository history.
+*.sqlite
+*.db
+*.db-journal
+data/*.db
+data/*.sqlite
+:memory:
+
+# Section 0: Dependency Directories
+# Node.js and Bun dependencies are managed via package managers and should not be committed.
+node_modules/
+bun.lockb
+.bun/
+
+# Section 0: OS and Editor Configurations
+# System-specific files, local editor settings, and project management files are removed.
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+Agents.md
+
+# Section 0: Logging and Diagnostics
+# Local log files and diagnostic output directories are excluded to prevent repository bloat.
+*.log
+logs/
+test_*.log
+test_output.log
