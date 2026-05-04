@@ -41,6 +41,19 @@ services:
     networks:
       - x402-migration-network
 
+  stage-3:
+    build: 
+      context: ./stage-3-x402
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3001"
+    environment:
+      - X402_WALLET_PRIVATE_KEY=${X402_WALLET_PRIVATE_KEY}
+      - X402_RPC_URL=${X402_RPC_URL}
+      - X402_USDC_CONTRACT=${X402_USDC_CONTRACT}
+    networks:
+      - x402-migration-network
+
   # Network resilience testing infrastructure
   toxiproxy:
     image: ghcr.io/shopify/toxiproxy:2.5.0
