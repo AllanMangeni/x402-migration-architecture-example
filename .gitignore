@@ -1,13 +1,39 @@
-# Local environment variables
+# Section 0: Environment Variables
+# All environment configuration files are excluded to protect sensitive credentials.
 .env
 .env.local
 .env.development
+.env.test
 .env.production
 
-# Dependencies
+# Section 0: Database and State Manager Artifacts
+# Local SQLite database files and their temporary journal files are restricted from version control.
+*.sqlite
+*.db
+*.db-journal
+
+# Section 0: Dependency Directories
+# Node.js and Bun dependencies are managed via package managers and should not be committed.
 node_modules/
+bun.lockb
+.bun/
 .pnpm-store/
 .venv/
 __pycache__/
+
+# Section 0: OS and Editor Configurations
+# System-specific files and local IDE settings are removed to maintain a clean environment.
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Section 0: Logging and Diagnostics
+# Local log files and diagnostic output directories are excluded to prevent repository bloat.
+*.log
+logs/
+
 # Project Management
 Agents.md
