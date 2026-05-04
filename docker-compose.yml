@@ -22,6 +22,25 @@ services:
     networks:
       - x402-migration-network
 
+  stage-2:
+    build: 
+      context: ./stage-2-hybrid
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3001"
+    environment:
+      - LITHIC_API_KEY=${LITHIC_API_KEY}
+      - LITHIC_WEBHOOK_SECRET=${LITHIC_WEBHOOK_SECRET}
+      - LITHIC_BASE_URL=${LITHIC_BASE_URL}
+      - DATABASE_PATH=/app/data/state.db
+      - TOXIPROXY_URL=http://toxiproxy:8474
+    volumes:
+      - ./stage-2-hybrid/data:/app/data
+    depends_on:
+      - toxiproxy
+    networks:
+      - x402-migration-network
+
   # Network resilience testing infrastructure
   toxiproxy:
     image: ghcr.io/shopify/toxiproxy:2.5.0
