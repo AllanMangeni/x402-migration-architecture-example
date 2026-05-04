@@ -4,7 +4,7 @@
   "modelProvider": "openai",
   "settings": {
     "secrets": {
-      "LITHIC_API_KEY": "9a40ec63-f650-4555-b8c0-b86f48aa9d26"
+      "LITHIC_API_KEY": "LITHIC_API_KEY_PLACEHOLDER"
     }
   },
   "plugins": [],
