@@ -15,14 +15,10 @@ This repository demonstrates an incremental migration from a legacy Lithic webho
     - Removal of all legacy state management.
     - Native x402 settlement for all agent payments.
 
-## Metrics Baseline (Stage One)
-
-| Metric | Stage 1 (Legacy) | Stage 2 (Hybrid) | Stage 3 (x402) |
-| :--- | :--- | :--- | :--- |
-| **State Mgmt LOC** | 15 lines | TBD | TBD |
-| **Transaction Latency** | ~3.5s | TBD | TBD |
-| **Recovery Complexity** | Toxiproxy Suite (3 failure modes) | TBD | TBD |
-| **Settlement Time** | Async (Webhook Dependent) | TBD | TBD |
+| **State Mgmt LOC** | 15 lines | 15 lines (Legacy path retained) | TBD |
+| **Transaction Latency** | ~3.5s | ~800ms (x402 path) | TBD |
+| **Recovery Complexity** | Toxiproxy Suite (3 failure modes) | Translation Layer failure handling | TBD |
+| **Settlement Time** | Async (Webhook Dependent) | Synchronous (x402) | TBD |
 
 ## Getting Started
 
@@ -36,11 +32,19 @@ Create a `.env` file in the root:
 ```env
 LITHIC_API_KEY=your_key_here
 LITHIC_WEBHOOK_SECRET=your_secret_here
+LITHIC_BASE_URL=http://toxiproxy:21000
 ```
 
-### Running Stage One
+## Running the Stages
+
+### Running Stage One (Legacy)
 ```bash
 docker-compose up stage-1
+```
+
+### Running Stage Two (Hybrid)
+```bash
+docker-compose up stage-2
 ```
 
 ### Running Resilience Tests
