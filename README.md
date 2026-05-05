@@ -92,4 +92,4 @@ cd stage-3-x402 && npx tsx src/tests/x402-resilience-suite.ts
 ```
 
 ---
-*Maintained by Allan Mang'eni & the x402 Migration Team at Scale Mesh Labs.*
+
