@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { purchasePriceFeedAction } from "./src/agent.js";
 import { PaymentService } from "./src/payment-service.js";
 import { StateManager } from "./src/state-manager.js";

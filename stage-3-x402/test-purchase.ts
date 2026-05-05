@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { purchasePriceFeedAction } from "./src/agent.js";
 import { PythClient } from "./src/pyth-client.js";
 import { X402NativeSettlementService } from "./src/x402-native-settlement.js";

@@ -20,9 +20,9 @@ interface StageMetrics {
  */
 export class MigrationObservability {
   private stages = [
-    { name: "Stage 1 (Legacy)", url: "http://stage-1:3001/api/observability/metrics" },
-    { name: "Stage 2 (Hybrid)", url: "http://stage-2:3001/api/observability/metrics" },
-    { name: "Stage 3 (Native)", url: "http://stage-3:3001/api/observability/metrics" }
+    { name: "Stage 1 (Legacy)", url: "http://localhost:3001/api/observability/metrics" },
+    { name: "Stage 2 (Hybrid)", url: "http://localhost:3002/api/observability/metrics" },
+    { name: "Stage 3 (Native)", url: "http://localhost:3003/api/observability/metrics" }
   ];
 
   public async getComparisonReport() {
