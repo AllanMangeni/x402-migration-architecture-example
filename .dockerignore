@@ -1,0 +1,9 @@
+node_modules/
+bun.lockb
+*.sqlite
+*.db
+*.log
+.git/
+.env
+**/node_modules/
+**/data/

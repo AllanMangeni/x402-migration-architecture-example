@@ -56,7 +56,7 @@ services:
 
   # Network resilience testing infrastructure
   toxiproxy:
-    image: ghcr.io/shopify/toxiproxy:2.5.0
+    image: shopify/toxiproxy:latest
     ports:
       - "8474:8474"   # Toxiproxy Management API
       - "21000:21000" # Proxy port for Lithic API simulation
