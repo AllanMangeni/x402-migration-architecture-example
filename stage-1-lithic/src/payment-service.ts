@@ -29,11 +29,11 @@ export class PaymentService {
    */
   public async initiatePurchase(transactionId: string, amount: number): Promise<string> {
     logger.info(`Initiating purchase ${transactionId} for $${amount}`);
-    
+
     // STATE_MGMT_LINE: tracking initiation before network request
     this.stateManager.createTransaction(transactionId, amount);
 
-    try { 
+    try {
       // 2. Create single-use card
       const card = await this.client.cards.create({
         type: "SINGLE_USE",
@@ -44,9 +44,9 @@ export class PaymentService {
 
       // STATE_MGMT_LINE: persisting card token for future webhook correlation
       await this.stateManager.updateStatus(transactionId, "PENDING", card.token);
-      
+
       return card.pan || ""; // Return PAN for sandbox simulation
-    } catch (error: any) { 
+    } catch (error: any) {
       // STATE_MGMT_LINE: manual failure state handling on network error
       logger.error(`Card creation failed for ${transactionId}:`, error);
       await this.stateManager.updateStatus(transactionId, "FAILED");
