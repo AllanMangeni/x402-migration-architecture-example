@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   stage-1:
     build: 
@@ -51,6 +49,8 @@ services:
       - X402_WALLET_PRIVATE_KEY=${X402_WALLET_PRIVATE_KEY}
       - X402_RPC_URL=${X402_RPC_URL}
       - X402_USDC_CONTRACT=${X402_USDC_CONTRACT}
+    depends_on:
+      - toxiproxy
     networks:
       - x402-migration-network
 
@@ -60,6 +60,7 @@ services:
     ports:
       - "8474:8474"   # Toxiproxy Management API
       - "21000:21000" # Proxy port for Lithic API simulation
+      - "8545:8545"   # Proxy port for x402 RPC simulation
     networks:
       - x402-migration-network
 
