@@ -40,13 +40,15 @@ services:
       - x402-migration-network
 
   stage-3:
-    build: 
+    build:
       context: ./stage-3-x402
       dockerfile: Dockerfile
     ports:
       - "3003:3001"
     environment:
       - X402_WALLET_PRIVATE_KEY=${X402_WALLET_PRIVATE_KEY}
+      # Base Sepolia RPC — set to http://toxiproxy:8545 to route through Toxiproxy
+      # for fault injection testing (latency, timeout, disconnect simulation)
       - X402_RPC_URL=${X402_RPC_URL}
       - X402_USDC_CONTRACT=${X402_USDC_CONTRACT}
     depends_on:
@@ -55,6 +57,8 @@ services:
       - x402-migration-network
 
   # Network resilience testing infrastructure
+  # Toxiproxy proxies RPC traffic on port 8545 so Stage 3 can be tested
+  # against simulated network faults (latency spikes, dropped connections)
   toxiproxy:
     image: shopify/toxiproxy:latest
     ports:
