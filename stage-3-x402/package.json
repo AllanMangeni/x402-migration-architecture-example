@@ -1,7 +1,7 @@
 {
   "name": "stage-3-x402",
   "version": "1.0.0",
-  "description": "Stage 3: Full x402 Native Settlement (Zero State Management)",
+  "description": "Stage 3: x402 RPC simulation over Base Sepolia (stateless)",
   "main": "src/index.ts",
   "type": "module",
   "scripts": {

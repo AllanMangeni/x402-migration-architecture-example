@@ -1,5 +1,7 @@
 import { Toxiproxy, Proxy } from "toxiproxy-node-client";
 import { X402NativeSettlementService } from "../x402-native-settlement";
+import { createPublicClient, http } from "viem";
+import { baseSepolia } from "viem/chains";
 import winston from "winston";
 
 const logger = winston.createLogger({
@@ -12,14 +14,33 @@ const TOXIPROXY_URL = process.env.TOXIPROXY_URL || "http://toxiproxy:8474";
 const toxiproxy = new Toxiproxy(TOXIPROXY_URL);
 
 /**
- * X402ResilienceSuite: Validates that the native x402 path handles 
+ * X402ResilienceSuite: Validates that the x402 RPC simulation path handles
  * network-level failures gracefully without local state management.
+ *
+ * Note: This suite tests RPC latency and connectivity, not real on-chain settlement.
  */
 async function runResilienceTests() {
   logger.info("Starting x402 Resilience Suite...");
 
+  const rpcUrl = process.env.X402_RPC_URL || "https://sepolia.base.org";
+  logger.info(`Configured X402_RPC_URL: ${rpcUrl}`);
+
+  // Preflight: verify RPC endpoint is reachable before running deeper tests
+  logger.info("Preflight: checking RPC endpoint reachability...");
+  try {
+    const preflightClient = createPublicClient({
+      chain: baseSepolia,
+      transport: http(rpcUrl),
+    });
+    const blockNumber = await preflightClient.getBlockNumber();
+    logger.info(`Preflight OK — connected to RPC, current block: ${blockNumber}`);
+  } catch (error: any) {
+    logger.error(`Preflight FAILED — RPC endpoint unreachable: ${error.message}`);
+    logger.error("Check X402_RPC_URL and network connectivity before running tests.");
+    process.exit(1);
+  }
+
   // 1. Setup RPC Proxy
-  // Note: In a real test, the upstream would be the actual RPC provider
   const rpcUpstream = process.env.X402_RPC_URL_UPSTREAM || "base-sepolia.g.alchemy.com:443";
   let rpcProxy: Proxy;
 
@@ -42,7 +63,7 @@ async function runResilienceTests() {
    */
   async function testRPCTimeout() {
     logger.info("TEST: RPC Timeout (Simulating network latency)");
-    
+
     await rpcProxy.addToxic({
       attributes: { latency: 90000 },
       name: "rpc-latency",
@@ -67,7 +88,7 @@ async function runResilienceTests() {
    */
   async function testSettlementRejection() {
     logger.info("TEST: Settlement Rejection (Simulating protocol failure)");
-    
+
     // For this demo, we simulate a rejection by passing an invalid merchant ID
     try {
       await x402Service.settle(10.0, "INVALID_MERCHANT");
